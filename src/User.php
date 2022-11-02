@@ -1,26 +1,47 @@
 <?php
 
+/**
+ * Author: Maksim Tsatsura
+ *
+ * Implementation date: 01.11.1989 21:00
+ *
+ * Modification date: 02.11.1989 10:00
+ *
+ * Database utility: phpmyadmin
+ **/
+
 declare(strict_types=1);
 
 namespace App;
 
+use App\ConnectDB;
+
+/**
+ * Class User is a class that creates
+ *  an instance of a new user or
+ *  returns an instance of an
+ *  existing user by id
+ * @package App
+ */
 class User
 {
+  use ConnectDB;
+
   private \MySQLi $mysqli;
 
   public int $id;
 
-  public string $firstName;
+  public ?string $firstName;
 
-  public string $lastName;
+  public ?string $lastName;
 
-  public string $date;
+  public ?string $date;
 
-  public string $gender;
+  public ?string $gender;
 
-  public string $city;
+  public ?string $city;
 
-  public function __construct($id, $firstName, $lastName, $date, $gender, $city)
+  public function __construct(int $id, string $firstName = null, string $lastName = null, string $date  = null, string $gender  = null, string $city  = null)
   {
     $this->connectDB();
 
@@ -37,6 +58,7 @@ class User
   private function createUser(): void
   {
     if ($this->getUserById($this->id)) {
+
       return;
     }
 
@@ -45,6 +67,16 @@ class User
 
     $result = $this->mysqli->prepare($request);
     $result->execute();
+  }
+
+  public function deleteUserById(int $id): bool
+  {
+    $request = "DELETE FROM `users` WHERE id={$id};";
+
+    $result = $this->mysqli->prepare($request);
+    $result->execute();
+
+    return true;
   }
 
   private function getUserById(int $id): bool
@@ -70,26 +102,18 @@ class User
     return  false;
   }
 
-  public static function convertDateToAge(string $birthday)
+  public static function convertDateToAge(User $user): User
   {
-    $diff = date('Ymd') - date('Ymd', strtotime($birthday));
+    $diff = date('Ymd') - date('Ymd', strtotime($user->date));
+    $user->date = substr((string)$diff, 0, -4);
 
-    return substr((string)$diff, 0, -4);
+    return $user;
   }
 
-  public static function convertGenderToString(string $gender)
+  public static function  convertGenderToString(User $user): User
   {
-    return $gender === '0' ? 'муж' : 'жен';
-  }
+    $user->gender === '0' ? 'муж' : 'жен';
 
-
-  private function connectDB()
-  {
-    $this->mysqli = new \MySQLi(HOST_NAME, USER_NAME, PASSWORD, DB_NAME);
-
-    if ($this->mysqli->connect_errno) {
-      echo "Failed to connect to MySQL: " . $this->mysqli->connect_error;
-      exit();
-    }
+    return $user;
   }
 }
